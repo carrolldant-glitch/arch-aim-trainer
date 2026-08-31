@@ -1,0 +1,19 @@
+[package]
+name = "arch-aim-trainer"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "A native, configurable aim trainer for Arch Linux"
+license = "MIT"
+authors = ["Danny Carroll <carrolldant@gmail.com>"]
+repository = "https://github.com/carrolldant-glitch/arch-aim-trainer"
+keywords = ["aim-trainer", "linux", "gaming", "arch-linux"]
+categories = ["games"]
+
+[dependencies]
+macroquad = "0.4.16"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = "symbols"
