@@ -14,7 +14,7 @@ No game assets are included. This project is independent and is not affiliated w
   - **Smooth Track** — reactive continuous tracking
   - **Target Switch** — controlled transfers among moving targets
   - **Projectile Lead** — finite-speed projectiles and an optional analytic lead guide
-- WASD movement plus vertical movement for strafe-aim practice
+- WASD movement plus gravity-based jumping for airborne strafe-aim practice
 - Score, accuracy, tracking percentage, reaction time, and combo statistics
 - Persistent settings under the XDG configuration directory
 - Append-only CSV session history under the XDG data directory
@@ -62,7 +62,7 @@ The first build downloads Rust crates from crates.io. Later locked builds can us
 | Mouse | Aim |
 | Mouse 1 | Fire; hold for Smooth Track |
 | `WASD` | Move |
-| `Space` / `Left Ctrl` | Move vertically |
+| `Space` | Jump; gravity returns you to the floor |
 | `L` | Toggle lead guide in Projectile Lead |
 | `R` | Restart scenario |
 | `Esc` | Pause |
@@ -93,7 +93,7 @@ cargo test --all-targets --locked
 cargo build --release --locked
 ```
 
-The tests cover ray/sphere hits, finite segment collision, projectile interception, settings validation, scenario construction, and session statistics.
+The tests cover ray/sphere hits, finite segment collision, projectile interception, gravity and jumping, settings validation, scenario construction, and session statistics.
 
 ## Safety and competitive integrity
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1 - 2026-09-02
+
+- Replace continuous vertical free flight with a grounded jump impulse,
+  gravity, and floor landing.
+- Keep horizontal movement speed independent from vertical velocity.
+- Add regression tests for jump direction, gravity, landing, and mid-air jump
+  rejection.
+
 ## 0.1.0 - 2026-08-31
 
 - Add a native 3D Macroquad renderer and captured first-person camera.

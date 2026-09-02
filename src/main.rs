@@ -52,6 +52,29 @@ const SUCCESS: Color = Color {
     b: 0.54,
     a: 1.0,
 };
+const PLAYER_EYE_HEIGHT: f32 = 2.2;
+const GRAVITY: f32 = 19.6;
+const JUMP_VELOCITY: f32 = 7.0;
+const GROUND_EPSILON: f32 = 0.001;
+
+fn update_vertical_motion(height: &mut f32, velocity: &mut f32, delta: f32, jump_requested: bool) {
+    let grounded = *height <= PLAYER_EYE_HEIGHT + GROUND_EPSILON && *velocity <= 0.0;
+    if grounded {
+        *height = PLAYER_EYE_HEIGHT;
+        *velocity = 0.0;
+        if jump_requested {
+            *velocity = JUMP_VELOCITY;
+        }
+    }
+
+    *velocity -= GRAVITY * delta;
+    *height += *velocity * delta;
+
+    if *height <= PLAYER_EYE_HEIGHT {
+        *height = PLAYER_EYE_HEIGHT;
+        *velocity = 0.0;
+    }
+}
 
 fn window_conf() -> Conf {
     Conf {
@@ -77,6 +100,7 @@ enum Mode {
 #[derive(Clone, Debug)]
 struct CameraRig {
     position: Vec3,
+    vertical_velocity: f32,
     yaw: f32,
     pitch: f32,
 }
@@ -84,7 +108,8 @@ struct CameraRig {
 impl CameraRig {
     fn new() -> Self {
         Self {
-            position: vec3(0.0, 2.2, 7.5),
+            position: vec3(0.0, PLAYER_EYE_HEIGHT, 7.5),
+            vertical_velocity: 0.0,
             yaw: 0.0,
             pitch: 0.0,
         }
@@ -122,9 +147,6 @@ impl CameraRig {
     }
 
     fn update_movement(&mut self, delta: f32, speed: f32) {
-        if speed <= 0.0 {
-            return;
-        }
         let forward = vec3(self.forward().x, 0.0, self.forward().z).normalize_or_zero();
         let right = vec3(self.right().x, 0.0, self.right().z).normalize_or_zero();
         let mut movement = Vec3::ZERO;
@@ -141,19 +163,19 @@ impl CameraRig {
         if is_key_down(KeyCode::D) {
             movement += right;
         }
-        if is_key_down(KeyCode::Space) {
-            movement += Vec3::Y;
-        }
-        if is_key_down(KeyCode::LeftControl) {
-            movement -= Vec3::Y;
-        }
 
-        if movement.length_squared() > 0.0 {
+        if speed > 0.0 && movement.length_squared() > 0.0 {
             self.position += movement.normalize() * speed * delta;
             self.position.x = self.position.x.clamp(-8.0, 8.0);
-            self.position.y = self.position.y.clamp(1.0, 7.0);
             self.position.z = self.position.z.clamp(2.0, 10.0);
         }
+
+        update_vertical_motion(
+            &mut self.position.y,
+            &mut self.vertical_velocity,
+            delta,
+            is_key_pressed(KeyCode::Space),
+        );
     }
 
     fn camera(&self, settings: &Settings) -> Camera3D {
@@ -167,6 +189,53 @@ impl CameraRig {
             z_far: 100.0,
             ..Default::default()
         }
+    }
+}
+
+#[cfg(test)]
+mod movement_tests {
+    use super::*;
+
+    #[test]
+    fn jump_changes_only_height_and_gravity_lands_on_the_floor() {
+        let mut position = vec3(3.0, PLAYER_EYE_HEIGHT, -4.0);
+        let mut velocity = 0.0;
+        let mut peak = position.y;
+
+        for frame in 0..240 {
+            update_vertical_motion(&mut position.y, &mut velocity, 1.0 / 120.0, frame == 0);
+            peak = peak.max(position.y);
+        }
+
+        assert!(peak > PLAYER_EYE_HEIGHT + 1.0);
+        assert_eq!(position.x, 3.0);
+        assert_eq!(position.z, -4.0);
+        assert_eq!(position.y, PLAYER_EYE_HEIGHT);
+        assert_eq!(velocity, 0.0);
+    }
+
+    #[test]
+    fn jump_request_is_ignored_while_airborne() {
+        let mut height = PLAYER_EYE_HEIGHT;
+        let mut velocity = 0.0;
+
+        update_vertical_motion(&mut height, &mut velocity, 1.0 / 60.0, true);
+        let velocity_after_takeoff = velocity;
+        update_vertical_motion(&mut height, &mut velocity, 1.0 / 60.0, true);
+
+        assert!(height > PLAYER_EYE_HEIGHT);
+        assert!(velocity < velocity_after_takeoff);
+    }
+
+    #[test]
+    fn a_large_fall_step_cannot_tunnel_below_the_floor() {
+        let mut height = PLAYER_EYE_HEIGHT + 0.1;
+        let mut velocity = -100.0;
+
+        update_vertical_motion(&mut height, &mut velocity, 0.05, false);
+
+        assert_eq!(height, PLAYER_EYE_HEIGHT);
+        assert_eq!(velocity, 0.0);
     }
 }
 
@@ -586,7 +655,7 @@ impl Trainer {
             settings_y + 173.0,
             "WASD",
             "Movement",
-            "Space / Ctrl vertical",
+            "Space to jump",
         );
 
         draw_text(

@@ -11,6 +11,13 @@ The trainer stores sensitivity as degrees of camera rotation per mouse pixel rep
 
 Disable desktop mouse acceleration for the closest transfer. On GNOME, the Flat acceleration profile is generally the appropriate starting point for competitive aiming; make that host setting yourself because this project never changes desktop configuration.
 
+## Movement and jumping
+
+`WASD` movement stays on the ground plane. Pressing `Space` applies one upward
+impulse; gravity then produces a fixed arc and returns the camera to its normal
+eye height. Holding `Space` does not create free flight or a mid-air second
+jump, and vertical velocity does not reduce horizontal strafe speed.
+
 ## Match field of view
 
 Use `C` / `V` to set the trainer's horizontal field of view. Match the horizontal FOV used by the game at your actual aspect ratio rather than copying a vertical-FOV value. The renderer converts horizontal FOV to the correct vertical projection every frame.
